@@ -1,0 +1,32 @@
+name: Mirror TDX GTFS
+
+on:
+  schedule:
+    - cron: "30 19 * * *" # 03:30 Taipei, daily — after TDX's own refresh window
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch national GTFS from TDX
+        env:
+          TDX_CLIENT_ID: ${{ secrets.TDX_CLIENT_ID }}
+          TDX_CLIENT_SECRET: ${{ secrets.TDX_CLIENT_SECRET }}
+        run: python3 fetch.py
+
+      - name: Publish at the stable URL
+        # One rolling release; the asset URL never changes, which is what
+        # Transitous needs. Last-Modified comes from the re-upload.
+        run: |
+          gh release delete latest --yes || true
+          gh release create latest tw-gtfs.zip \
+            --title "Taiwan national GTFS (TDX mirror)" \
+            --notes "Daily mirror of https://tdx.transportdata.tw/api/gtfs/V3/Map/GTFS/Static with oversized Fares-v2 tables removed. Data: Ministry of Transportation and Communications, Taiwan (TDX), https://tdx.transportdata.tw/term"
+        env:
+          GH_TOKEN: ${{ github.token }}
