@@ -7,9 +7,8 @@ The data's license (Taiwan OGDL, attribution required) permits
 redistribution — so this script does the token dance once a day and
 republishes the zip where a plain HTTP GET can reach it.
 
-Also strips the oversized GTFS-Fares v2 tables, as Transitland's own
-custom fetcher does — they dwarf the rest of the feed and no router
-consumes them yet.
+Publishes the feed untouched: Transitous asked to keep the fare tables
+(they may implement fares support), so nothing is stripped anymore.
 
 Needs TDX_CLIENT_ID / TDX_CLIENT_SECRET in the environment.
 """
@@ -23,18 +22,6 @@ import zipfile
 TOKEN_URL = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
 GTFS_URL = "https://tdx.transportdata.tw/api/gtfs/V3/Map/GTFS/Static"
 USER_AGENT = "tdx-gtfs-mirror/0.1 (+https://github.com/jcanizalez/tdx-gtfs-mirror)"
-# Fare tables (v1 and v2) that dwarf the feed; no router consumes them.
-# fare_attributes + fare_rules alone are ~450 MB uncompressed — two thirds
-# of the whole feed. Transitland's own TDX fetcher strips fares the same way.
-DROP_TABLES = {
-    "fare_leg_rules.txt",
-    "fare_transfer_rules.txt",
-    "fare_products.txt",
-    "fare_attributes.txt",
-    "fare_rules.txt",
-    "fare_media.txt",
-    "rider_categories.txt",
-}
 
 
 def get_token() -> str:
@@ -63,17 +50,6 @@ def fetch_gtfs(token: str) -> bytes:
     )
     with urllib.request.urlopen(req, timeout=600) as res:
         return res.read()
-
-
-def strip_fares(raw: bytes) -> bytes:
-    src = zipfile.ZipFile(io.BytesIO(raw))
-    out_buf = io.BytesIO()
-    with zipfile.ZipFile(out_buf, "w", zipfile.ZIP_DEFLATED) as out:
-        for info in src.infolist():
-            if info.filename in DROP_TABLES:
-                continue
-            out.writestr(info, src.read(info))
-    return out_buf.getvalue()
 
 
 def main() -> None:
