@@ -23,8 +23,18 @@ import zipfile
 TOKEN_URL = "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token"
 GTFS_URL = "https://tdx.transportdata.tw/api/gtfs/V3/Map/GTFS/Static"
 USER_AGENT = "tdx-gtfs-mirror/0.1 (+https://github.com/jcanizalez/tdx-gtfs-mirror)"
-# GTFS-Fares v2 tables that dwarf the feed; nothing downstream reads them.
-DROP_TABLES = {"fare_leg_rules.txt", "fare_transfer_rules.txt", "fare_products.txt"}
+# Fare tables (v1 and v2) that dwarf the feed; no router consumes them.
+# fare_attributes + fare_rules alone are ~450 MB uncompressed — two thirds
+# of the whole feed. Transitland's own TDX fetcher strips fares the same way.
+DROP_TABLES = {
+    "fare_leg_rules.txt",
+    "fare_transfer_rules.txt",
+    "fare_products.txt",
+    "fare_attributes.txt",
+    "fare_rules.txt",
+    "fare_media.txt",
+    "rider_categories.txt",
+}
 
 
 def get_token() -> str:
