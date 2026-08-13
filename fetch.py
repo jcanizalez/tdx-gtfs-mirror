@@ -55,10 +55,9 @@ def fetch_gtfs(token: str) -> bytes:
 def main() -> None:
     token = get_token()
     raw = fetch_gtfs(token)
-    slim = strip_fares(raw)
     with open("tw-gtfs.zip", "wb") as f:
-        f.write(slim)
-    print(f"fetched {len(raw)} bytes, published {len(slim)} bytes", file=sys.stderr)
+        f.write(raw)
+    print(f"fetched and published {len(raw)} bytes untouched", file=sys.stderr)
 
 
 if __name__ == "__main__":
