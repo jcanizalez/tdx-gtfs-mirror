@@ -7,10 +7,10 @@ The data's license (Taiwan OGDL, attribution required) permits
 redistribution — so this script does the token dance once a day and
 republishes the zip where a plain HTTP GET can reach it.
 
-Keeps GTFS-Fares v1 (fare_attributes/fare_rules — Transitous may implement
-support) and strips only the Fares v2 tables, which alone are ~300 MB of the
-zip and which Transitland's own TDX fetcher also drops. Untouched the zip is
-435 MB; with v2 stripped it is 127 MB.
+Publishes the feed untouched, fares included: MOTIS's routing engine
+supports GTFS-Fares v2 specifically (transitous#2396), so the v2 tables —
+~300 MB of the 435 MB zip — are exactly the part worth carrying. No
+stripping.
 
 Needs TDX_CLIENT_ID / TDX_CLIENT_SECRET in the environment.
 """
@@ -54,28 +54,14 @@ def fetch_gtfs(token: str) -> bytes:
         return res.read()
 
 
-# GTFS-Fares v2 tables; v1 stays in the feed.
-DROP_TABLES = {"fare_leg_rules.txt", "fare_transfer_rules.txt", "fare_products.txt"}
-
-
-def strip_fares_v2(raw: bytes) -> bytes:
-    src = zipfile.ZipFile(io.BytesIO(raw))
-    out_buf = io.BytesIO()
-    with zipfile.ZipFile(out_buf, "w", zipfile.ZIP_DEFLATED) as out:
-        for info in src.infolist():
-            if info.filename in DROP_TABLES:
-                continue
-            out.writestr(info, src.read(info))
-    return out_buf.getvalue()
-
-
 def main() -> None:
     token = get_token()
     raw = fetch_gtfs(token)
-    slim = strip_fares_v2(raw)
+    # Sanity: a truncated download must not overwrite a good release.
+    zipfile.ZipFile(io.BytesIO(raw)).testzip()
     with open("tw-gtfs.zip", "wb") as f:
-        f.write(slim)
-    print(f"fetched {len(raw)} bytes, published {len(slim)} bytes (fares v1 kept)", file=sys.stderr)
+        f.write(raw)
+    print(f"fetched and published {len(raw)} bytes (untouched, all fares tables kept)", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -18,9 +18,9 @@ Taiwan has been missing from their coverage.
 
 The data's license ([TDX terms](https://tdx.transportdata.tw/term), Taiwan's
 Open Government Data License) permits redistribution with attribution, so this
-repository does the token dance once a day and republishes the zip. The
-oversized GTFS-Fares v2 tables are stripped (as Transitland's fetcher also
-does) — they dwarf the rest of the feed and no consumer reads them.
+repository does the token dance once a day and republishes the zip untouched,
+GTFS-Fares v2 tables included — MOTIS (Transitous's routing engine) supports
+Fares v2, so the ~300 MB of fares data is exactly the part worth carrying.
 
 ## Attribution
 
